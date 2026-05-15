@@ -7,7 +7,7 @@ services:
       - "${FORGEJO_HTTP_PORT}:3000"
       - "${FORGEJO_SSH_PORT}:22"
     volumes:
-      - forgejo-data:/data
+      - /home/irisusr/forgejo-db:/data
     environment:
       - FORGEJO__server__PROTOCOL=http
       - FORGEJO__server__HTTP_ADDR=0.0.0.0
@@ -16,17 +16,14 @@ services:
       - FORGEJO__server__SSH_DOMAIN=${FORGEJO_DOMAIN}
       - FORGEJO__server__SSH_PORT=${FORGEJO_SSH_PORT}
       - FORGEJO__server__START_SSH_SERVER=false
+      - FORGEJO__service__DISABLE_REGISTRATION=false
       - FORGEJO__database__DB_TYPE=sqlite3
       - FORGEJO__migrations__ALLOW_LOCALNETWORKS=true
       - FORGEJO__migrations__SKIP_TLS_VERIFY=true
       #- FORGEJO__migrations__ALLOWED_DOMAINS=gitlab.local,172.16.0.100
-      - FORGEJO__service__DISABLE_REGISTRATION=false
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-
-volumes:
-  forgejo-data:
