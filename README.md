@@ -458,7 +458,6 @@ docker image prune -f
 ```
 
 ---
-
 ## Полезные ссылки
 
 - Официальная документация: https://forgejo.org/docs/
