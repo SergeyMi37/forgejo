@@ -20,7 +20,7 @@ services:
       - FORGEJO__database__DB_TYPE=sqlite3
       - FORGEJO__migrations__ALLOW_LOCALNETWORKS=true
       - FORGEJO__migrations__SKIP_TLS_VERIFY=true
-      #- FORGEJO__migrations__ALLOWED_DOMAINS=gitlab.local,172.16.0.100,github.com
+      #- FORGEJO__migrations__ALLOWED_DOMAINS=gitlab.local,172.16.0.100,github.com,github.com,api.github.com,raw.githubusercontent.com,gist.github.com
       #- HTTP_PROXY=http://proxy.company.com:8080
       #- HTTPS_PROXY=http://proxy.company.com:8080
       #- NO_PROXY=localhost,127.0.0.1,.local
