@@ -54,11 +54,8 @@ docker compose up -d --force-recreate
 # Запуск в фоне
 docker compose up -d
 
-# Остановка
+# Остановка контейнера (данные в /home/irisusr/forgejo-db сохранятся)
 docker compose down
-
-# Остановка с удалением volume (ВСЕ данные будут потеряны!)
-docker compose down -v
 
 # Перезапуск
 docker compose restart
@@ -95,55 +92,52 @@ docker stats forgejo
 
 ---
 
-## Работа с данными (volume)
+## Работа с данными (bind mount)
 
-Все данные хранятся в именованном Docker-volume `forgejo-data`:
-- `/data/forgejo.db` — база данных SQLite
+Все данные хранятся на хосте в директории `/home/irisusr/forgejo-db`, которая примонтирована в контейнер как `/data`:
+- `/data/gitea/gitea.db` — база данных SQLite
 - `/data/gitea-repositories` — Git-репозитории
-- `/data/forgejo/conf/app.ini` — конфигурация
-- `/data/forgejo/avatars`, `/data/forgejo/attachments` — загружаемые файлы
+- `/data/gitea/conf/app.ini` — основной конфиг Forgejo
+- `/data/gitea/custom/conf/app.ini` — основной пользовательский конфиг Forgejo
+- `/data/gitea/data/avatars`, `/data/gitea/data/attachments` — пользовательские файлы
 
-### Просмотр содержимого volume
+### Просмотр содержимого данных
 
 ```bash
-# Запуск вспомогательного контейнера для доступа к данным
-docker run --rm -it -v forgejo-forgejo-data:/data alpine sh
-
-# Внутри контейнера:
-cd /data && ls -la
+# Просмотр файлов на хосте
+ls -la /home/irisusr/forgejo-db
 ```
 
 ### Копирование файлов
 
 ```bash
 # Скопировать БД из контейнера на хост
-docker compose cp forgejo:/data/forgejo.db ./forgejo-backup.db
+docker compose cp forgejo:/data/gitea/gitea.db ./forgejo-backup.db
 
 # Скопировать конфиг с хоста в контейнер (осторожно!)
-docker compose cp ./app.ini forgejo:/data/forgejo/conf/app.ini
+docker compose cp ./app.ini forgejo:/data/gitea/conf/app.ini
 ```
 
 ---
 
 ## Резервное копирование
 
-### Полный бэкап volume
+### Полный бэкап директории данных
 
 ```bash
-# Архивирование всего volume
-docker run --rm -v forgejo-forgejo-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/forgejo-backup-$(date +%Y%m%d_%H%M%S).tar.gz -C /data .
+# Архивирование всей директории данных
+tar czf forgejo-backup-$(date +%Y%m%d_%H%M%S).tar.gz -C /home/irisusr/forgejo-db .
 ```
 
 ### Бэкап только базы данных (SQLite)
 
 ```bash
 # Создание дампа БД
-docker compose exec forgejo sh -c "sqlite3 /data/forgejo.db '.backup /data/forgejo.db.backup'"
-docker compose cp forgejo:/data/forgejo.db.backup ./forgejo-db-backup.db
+docker compose exec forgejo sh -c "sqlite3 /data/gitea/gitea.db '.backup /data/gitea/gitea.db.backup'"
+docker compose cp forgejo:/data/gitea/gitea.db.backup ./forgejo-db-backup.db
 
 # Или напрямую через sqlite3 в контейнере (если установлен)
-docker compose exec forgejo sqlite3 /data/forgejo.db ".dump" > forgejo-dump-$(date +%Y%m%d).sql
+docker compose exec forgejo sqlite3 /data/gitea/gitea.db ".dump" > forgejo-dump-$(date +%Y%m%d).sql
 ```
 
 ### Бэкап репозиториев
@@ -152,8 +146,7 @@ docker compose exec forgejo sqlite3 /data/forgejo.db ".dump" > forgejo-dump-$(da
 
 ```bash
 # Архивирование директории репозиториев
-docker run --rm -v forgejo-forgejo-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/forgejo-repos-$(date +%Y%m%d_%H%M%S).tar.gz -C /data/gitea-repositories .
+tar czf forgejo-repos-$(date +%Y%m%d_%H%M%S).tar.gz -C /home/irisusr/forgejo-db/gitea-repositories .
 ```
 
 ### Автоматический бэкап (пример скрипта)
@@ -168,11 +161,8 @@ DATE=$(date +%Y%m%d_%H%M%S)
 # Остановка контейнера для консистентности
 docker compose -f /path/to/forgejo/docker-compose.yml down
 
-# Бэкап volume
-docker run --rm \
-  -v forgejo-forgejo-data:/data \
-  -v "$BACKUP_DIR":/backup \
-  alpine tar czf "/backup/forgejo-full-${DATE}.tar.gz" -C /data .
+# Бэкап директории данных
+tar czf "$BACKUP_DIR/forgejo-full-${DATE}.tar.gz" -C /home/irisusr/forgejo-db .
 
 # Запуск
 docker compose -f /path/to/forgejo/docker-compose.yml up -d
@@ -185,21 +175,17 @@ find "$BACKUP_DIR" -name "forgejo-full-*.tar.gz" -mtime +30 -delete
 
 ## Восстановление из резервной копии
 
-### Полное восстановление volume
+### Полное восстановление директории данных
 
 ```bash
 # Остановка и удаление старого контейнера
 docker compose down
 
-# Удаление старого volume (ВНИМАНИЕ: все текущие данные будут уничтожены)
-docker volume rm forgejo-forgejo-data
+# Очистка директории данных (ВНИМАНИЕ: все текущие данные будут уничтожены)
+rm -rf /home/irisusr/forgejo-db/*
 
-# Создание нового volume и распаковка бэкапа
-docker volume create forgejo-forgejo-data
-docker run --rm \
-  -v forgejo-forgejo-data:/data \
-  -v $(pwd):/backup alpine \
-  sh -c "cd /data && tar xzf /backup/forgejo-backup-YYYYMMDD_HHMMSS.tar.gz"
+# Распаковка бэкапа
+tar xzf forgejo-backup-YYYYMMDD_HHMMSS.tar.gz -C /home/irisusr/forgejo-db
 
 # Запуск
 docker compose up -d
@@ -212,7 +198,7 @@ docker compose up -d
 docker compose stop forgejo
 
 # Копирование файла БД в контейнер
-docker compose cp ./forgejo-backup.db forgejo:/data/forgejo.db
+docker compose cp ./forgejo-backup.db forgejo:/data/gitea/gitea.db
 
 # Перезапуск
 docker compose start forgejo
@@ -225,7 +211,7 @@ docker compose start forgejo
 ### Интерактивная консоль SQLite
 
 ```bash
-docker compose exec forgejo sqlite3 /data/forgejo.db
+docker compose exec forgejo sqlite3 /data/gitea/gitea.db
 ```
 
 ### Полезные SQL-запросы
@@ -248,13 +234,13 @@ SELECT id, name FROM user WHERE type = 1;
 
 ```bash
 # VACUUM перестраивает БД и уменьшает размер файла
-docker compose exec forgejo sqlite3 /data/forgejo.db "VACUUM;"
+docker compose exec forgejo sqlite3 /data/gitea/gitea.db "VACUUM;"
 ```
 
 ### Проверка целостности БД
 
 ```bash
-docker compose exec forgejo sqlite3 /data/forgejo.db "PRAGMA integrity_check;"
+docker compose exec forgejo sqlite3 /data/gitea/gitea.db "PRAGMA integrity_check;"
 ```
 
 ---
@@ -263,7 +249,7 @@ docker compose exec forgejo sqlite3 /data/forgejo.db "PRAGMA integrity_check;"
 
 ### Структура хранения
 
-Репозитории находятся в volume по пути:
+Репозитории находятся в директории данных по пути:
 ```
 /data/gitea-repositories/<пользователь_или_организация>/<репозиторий>.git
 ```
@@ -301,8 +287,7 @@ find /data/gitea-repositories -name "*.git" -type d -exec git -C {} gc --aggress
 ```bash
 # 1. Создать бэкап
 docker compose down
-docker run --rm -v forgejo-forgejo-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/forgejo-pre-update-$(date +%Y%m%d).tar.gz -C /data .
+tar czf forgejo-pre-update-$(date +%Y%m%d).tar.gz -C /home/irisusr/forgejo-db .
 
 # 2. Обновить образ
 docker compose pull
@@ -427,7 +412,7 @@ docker compose restart forgejo
 # Проверить логи
 docker compose logs forgejo
 
-# Проверить права на volume
+# Проверить права на директорию данных
 docker compose exec forgejo ls -la /data/
 
 # Сброс прав (если нужно)
