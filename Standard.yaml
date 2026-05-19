@@ -1,0 +1,94 @@
+labels:
+  # === Тип задачи (Kind) ===
+  - name: "Kind/Bug"
+    color: "d73a4a"
+    description: "Сообщение об ошибке. Что-то работает не так, как ожидалось."
+    exclusive: false
+  
+  - name: "Kind/Feature"
+    color: "008672"
+    description: "Новая функциональность или возможность, которой раньше не было."
+    exclusive: false
+  
+  - name: "Kind/Enhancement"
+    color: "a2eeef"
+    description: "Улучшение существующей функциональности. Не новая фича, но и не баг."
+    exclusive: false
+  
+  - name: "Kind/Documentation"
+    color: "0075ca"
+    description: "Относится к документации: README, комментарии, руководства."
+    exclusive: false
+  
+  - name: "Kind/Question"
+    color: "d876e3"
+    description: "Вопрос, требующий разъяснения или обсуждения."
+    exclusive: false
+
+  # === Статус выполнения (Status) ===
+  - name: "Status/In Progress"
+    color: "fbca04"
+    description: "Задача взята в работу и активно выполняется."
+    exclusive: true
+  
+  - name: "Status/Blocked"
+    color: "e99695"
+    description: "Работа над задачей заблокирована. Требуется внешнее действие."
+    exclusive: true
+  
+  - name: "Status/Done"
+    color: "0e8a16"
+    description: "Задача завершена. PR принят или Issue закрыт."
+    exclusive: true
+  
+  - name: "Status/Review Needed"
+    color: "fef2c0"
+    description: "Готово к проверке. Требуется ревью кода или подтверждение."
+    exclusive: true
+  
+  - name: "Status/Draft"
+    color: "d3e2f0"
+    description: "Черновик. Работа ещё не готова для ревью или обсуждения."
+    exclusive: true
+
+  # === Приоритет (Priority) ===
+  - name: "Priority/Critical"
+    color: "b60205"
+    description: "Критический приоритет. Немедленное исправление. Блокирует релиз."
+    exclusive: true
+  
+  - name: "Priority/High"
+    color: "d93f0b"
+    description: "Высокий приоритет. Должно быть исправлено в ближайшее время."
+    exclusive: true
+  
+  - name: "Priority/Medium"
+    color: "fbca04"
+    description: "Средний приоритет. Будет рассмотрено в плановом порядке."
+    exclusive: true
+  
+  - name: "Priority/Low"
+    color: "0e8a16"
+    description: "Низкий приоритет. Приятно иметь, но не срочно."
+    exclusive: true
+
+  # === Дополнительные полезные метки ===
+  - name: "Good First Issue"
+    color: "7057ff"
+    description: "Хорошая задача для новичков. Дружелюбно к сообществу."
+    exclusive: false
+  
+  - name: "Help Wanted"
+    color: "008672"
+    description: "Требуется помощь сообщества. Никто не взял или сложная задача."
+    exclusive: false
+  
+  - name: "Duplicate"
+    color: "cfd3d7"
+    description: "Дубликат другой задачи. Будет закрыто."
+    exclusive: false
+  
+  - name: "Wontfix"
+    color: "ffffff"
+    description: "Решено не исправлять. Задача закрыта с указанием причины."
+    exclusive: false
